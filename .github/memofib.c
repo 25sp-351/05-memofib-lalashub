@@ -1,39 +1,34 @@
-#include <stdio.h>
+#include "memofib.h"
+#include <stdio.h>  
+#include <stddef.h>  
+
 #define NOT_PRESENT -1
+#define MAX_FIB     100
 
-typedef long (*long_func_ptr)(int);
+static long results[MAX_FIB];
 
-long fibonacci(int n) {
-    if (n <= 1)
-        return n;
-    return fibonacci(n - 1) + fibonacci(n - 2);
-}
+long_func_ptr original_provider = NULL;
+long_func_ptr fibonacci_provider = NULL;
 
-long_func_ptr original_provider; 
-long_func_ptr fibonacci_provider;
-
-long results[100] = { [0 ... 99] = NOT_PRESENT };
-
-long cache(int val) {
-    if (results[val] == NOT_PRESENT)
-        results[val] = (*original_provider)(val); 
-    return results[val];
-}
-
-int main() {
-    original_provider = fibonacci;
-    fibonacci_provider = cache;
-
-    int n;
-    printf("Enter a number to compute Fibonacci: ");
-    scanf("%d", &n);
-
-    if (n < 0 || n >= 100) {
-        printf("Please enter a number between 0 and 99.\n");
-        return 1; 
+void initialize_cache(void) {
+    for (int i = 0; i < MAX_FIB; i++) {
+        results[i] = NOT_PRESENT;
     }
+}
 
-    printf("Fibonacci of %d is %ld\n", n, (*fibonacci_provider)(n));
+long fibonacci_actual(int index) {
+    if (index <= 1) {
+        return index;
+    }
+    return fibonacci_provider(index - 1) + fibonacci_provider(index - 2);
+}
 
-    return 0;
+long cache_fib(int index) {
+    if (index < 0 || index >= MAX_FIB) {
+        return -1;
+    }
+    if (results[index] == NOT_PRESENT) {
+        results[index] = original_provider(index);
+    }
+    return results[index];
 }
